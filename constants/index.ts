@@ -1,4 +1,4 @@
-export const resumes: Resume[] = [
+ export const resumes: Resume[] = [
   {
     id: "1",
     companyName: "Google",
@@ -15,7 +15,7 @@ export const resumes: Resume[] = [
         score: 90,
         tips: [],
       },
-      content: {
+      content: {      //Pagal Karthikeya // gadha karthikeya // menu karthikeya
         score: 90,
         tips: [],
       },
@@ -67,6 +67,96 @@ export const resumes: Resume[] = [
     resumePath: "/resumes/resume-3.pdf",
     feedback: {
       overallScore: 75,
+      ATS: {
+        score: 90,
+        tips: [],
+      },
+      toneAndStyle: {
+        score: 90,
+        tips: [],
+      },
+      content: {
+        score: 90,
+        tips: [],
+      },
+      structure: {
+        score: 90,
+        tips: [],
+      },
+      skills: {
+        score: 90,
+        tips: [],
+      },
+    },
+  },
+  {
+    id: "4",
+    companyName: "Deliotte",
+    jobTitle: "Data Analyst",
+    imagePath: "/images/resume-1.png",
+    resumePath: "/resumes/resume-1.pdf",
+    feedback: {
+      overallScore: 70,
+      ATS: {
+        score: 90,
+        tips: [],
+      },
+      toneAndStyle: {
+        score: 90,
+        tips: [],
+      },
+      content: {      //Pagal Karthikeya // gadha karthikeya // menu karthikeya
+        score: 90,
+        tips: [],
+      },
+      structure: {
+        score: 90,
+        tips: [],
+      },
+      skills: {
+        score: 90,
+        tips: [],
+      },
+    },
+  },
+  {
+    id: "5",
+    companyName: "AWS",
+    jobTitle: "AI/ML Engineer",
+    imagePath: "/images/resume-2.png",
+    resumePath: "/resumes/resume-2.pdf",
+    feedback: {
+      overallScore: 80,
+      ATS: {
+        score: 90,
+        tips: [],
+      },
+      toneAndStyle: {
+        score: 90,
+        tips: [],
+      },
+      content: {
+        score: 90,
+        tips: [],
+      },
+      structure: {
+        score: 90,
+        tips: [],
+      },
+      skills: {
+        score: 90,
+        tips: [],
+      },
+    },
+  },
+  {
+    id: "6",
+    companyName: "Goldman Sachs",
+    jobTitle: "Associate-Software Engineering",
+    imagePath: "/images/resume-3.png",
+    resumePath: "/resumes/resume-3.pdf",
+    feedback: {
+      overallScore: 50,
       ATS: {
         score: 90,
         tips: [],
