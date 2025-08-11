@@ -1,59 +1,109 @@
+import * as pdfjsLib from 'pdfjs-dist';
+
 export interface PdfConversionResult {
   imageUrl: string;
   file: File | null;
   error?: string;
 }
 
-let pdfjsLib: any = null;
+let pdfjsLibInstance: typeof pdfjsLib | null = null;
 let isLoading = false;
-let loadPromise: Promise<any> | null = null;
+let loadPromise: Promise<typeof pdfjsLib> | null = null;
 
-async function loadPdfJs(): Promise<any> {
-  if (pdfjsLib) return pdfjsLib;
+async function loadPdfJs(): Promise<typeof pdfjsLib> {
+  if (pdfjsLibInstance) return pdfjsLibInstance;
   if (loadPromise) return loadPromise;
 
   isLoading = true;
-  // @ts-expect-error - pdfjs-dist/build/pdf.mjs is not a module
-  loadPromise = import("pdfjs-dist/build/pdf.mjs").then((lib) => {
-    // Set the worker source to use local file
-    lib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
-    pdfjsLib = lib;
-    isLoading = false;
-    return lib;
-  });
 
-  return loadPromise;
+  try {
+    loadPromise = import('pdfjs-dist').then((lib) => {
+      lib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+      pdfjsLibInstance = lib;
+      isLoading = false;
+      return lib;
+    }).catch((error) => {
+      console.error("Failed to load PDF.js:", error);
+      isLoading = false;
+      throw new Error("Failed to load PDF.js library");
+    });
+
+    return loadPromise;
+  } catch (error) {
+    isLoading = false;
+    loadPromise = null;
+    throw error;
+  }
 }
 
-export async function convertPdfToImage(
-  file: File
-): Promise<PdfConversionResult> {
+export async function convertPdfToImage(file: File): Promise<PdfConversionResult> {
   try {
-    const lib = await loadPdfJs();
+    // Validate file type
+    if (!file.type.includes('pdf') && !file.name.toLowerCase().endsWith('.pdf')) {
+      throw new Error("File is not a PDF");
+    }
 
+    // Check file size
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    if (file.size > maxSize) {
+      throw new Error("PDF file is too large");
+    }
+
+    const lib = await loadPdfJs();
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await lib.getDocument({ data: arrayBuffer }).promise;
+
+    // Load the PDF document
+    const loadingTask = lib.getDocument({
+      data: arrayBuffer,
+      verbosity: 0,
+      isEvalSupported: false,
+      isOffscreenCanvasSupported: false,
+    });
+
+    const pdf = await loadingTask.promise.catch((err) => {
+      throw new Error(`Failed to load PDF document: ${err.message}`);
+    });
+
+    // Get the first page
     const page = await pdf.getPage(1);
 
-    const viewport = page.getViewport({ scale: 4 });
+    // Set up the viewport
+    const scale = Math.min(2.0, window.devicePixelRatio || 1);
+    const viewport = page.getViewport({ scale });
+
+    // Create canvas
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
+
+    if (!context) {
+      throw new Error("Could not get canvas 2D context");
+    }
 
     canvas.width = viewport.width;
     canvas.height = viewport.height;
 
-    if (context) {
-      context.imageSmoothingEnabled = true;
-      context.imageSmoothingQuality = "high";
-    }
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
 
-    await page.render({ canvasContext: context!, viewport }).promise;
+    // Render the page
+    const renderContext = {
+      canvasContext: context,
+      viewport: viewport,
+    };
 
+    await page.render(renderContext).promise;
+
+    // Cleanup
+    page.cleanup();
+    pdf.destroy();
+
+    // Convert canvas to blob
     return new Promise((resolve) => {
       canvas.toBlob(
         (blob) => {
+          canvas.remove(); // Clean up canvas
+
           if (blob) {
-            // Create a File from the blob with the same name as the pdf
             const originalName = file.name.replace(/\.pdf$/i, "");
             const imageFile = new File([blob], `${originalName}.png`, {
               type: "image/png",
@@ -67,19 +117,24 @@ export async function convertPdfToImage(
             resolve({
               imageUrl: "",
               file: null,
-              error: "Failed to create image blob",
+              error: "Failed to create image blob from canvas",
             });
           }
         },
         "image/png",
-        1.0
-      ); // Set quality to maximum (1.0)
+        0.95
+      );
     });
   } catch (err) {
+    console.error("PDF conversion error:", err);
+    let errorMessage = "Failed to convert PDF";
+    if (err instanceof Error) {
+      errorMessage = err.message;
+    }
     return {
       imageUrl: "",
       file: null,
-      error: `Failed to convert PDF: ${err}`,
+      error: errorMessage,
     };
   }
 }
