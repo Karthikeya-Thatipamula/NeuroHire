@@ -1,9 +1,12 @@
 
+import { prepareInstructions } from "constants";
 import { useState, type FormEvent } from "react"
 import { useNavigate } from "react-router";
 import FileUploader from "~/components/FileUploader";
 import Navbar from "~/components/Navbar"
+import { convertPdfToImage } from "~/lib/pdf2img";
 import { usePuterStore } from "~/lib/puter";
+import { generateUUID } from "~/lib/utils";
 
 const upload = () => {
     const { auth, isLoading, fs, ai, kv } = usePuterStore();
@@ -11,6 +14,7 @@ const upload = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [statusText, setStatusText] = useState('');
     const [file, setFile] = useState<File | null>(null);
+
     const handleFileSelect = (file: File | null) => {
         setFile(file)
     }
@@ -23,7 +27,40 @@ const upload = () => {
         if(!uploadedFile) return setStatusText('Error: Failed To Upload File');
 
         setStatusText('Converting to image...');
-        // const imageFile = await convertPdfToImage(file);
+        const imageFile = await convertPdfToImage(file);
+        if(!imageFile.file) return setStatusText('Error: Failed to convert PDF to Image');
+
+        setStatusText('Uploading the Image...')
+        const uploadedImage = await fs.upload([imageFile.file]);
+        if(!uploadedImage) return setStatusText('Error: Failed To Upload Image');
+
+        setStatusText('Preparing data... ')
+
+        const uuid = generateUUID();
+        const data = {
+            id: uuid,
+            resumePath: uploadedFile.path,
+            imagePath: uploadedImage.path,
+            companyName,jobTitle,jobDescription,
+            feedback: '',
+        }
+        await kv.set(`resume:${uuid}`, JSON.stringify(data));
+
+        setStatusText('Analyzing...');
+
+        const feedback = await ai.feedback(
+            uploadedFile.path,
+            prepareInstructions({ jobTitle, jobDescription})
+        )
+        if (!feedback) return setStatusText('Error: Failed to analyze resume');
+
+        const feedbackText = typeof feedback.message.content === 'string' ? feedback.message.content: feedback.message.content[0].text;
+
+        data.feedback = JSON.parse(feedbackText);
+        await kv.set(`resume:${uuid}`, JSON.stringify(data));
+        setStatusText(('Analysis complete, redirecting...'));
+        console.log(data);
+        
     }
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
