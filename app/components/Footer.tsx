@@ -1,6 +1,6 @@
 const Footer = () => {
   return (
-    <footer className="text-center py-6 text-sm text-gray-500 border-t border-gray-200">
+    <footer className="text-center py-4 text-sm text-gray-500 border-t border-gray-200 bg-white">
       <p>
         Made with ❤️ by{" "}
         <a
@@ -13,7 +13,7 @@ const Footer = () => {
         </a>
       </p>
 
-      <nav aria-label="Social media links" className="mt-3">
+      <nav aria-label="Social media links" className="mt-2">
         <ul className="flex justify-center gap-6">
           {/* GitHub */}
           <li>
