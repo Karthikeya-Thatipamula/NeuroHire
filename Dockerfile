@@ -1,23 +1,21 @@
-FROM node:20-alpine AS development-dependencies-env
-COPY . /app
+# Install dependencies
+FROM node:20-alpine AS deps
 WORKDIR /app
+COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM node:20-alpine AS production-dependencies-env
-COPY ./package.json package-lock.json /app/
+# Build the app
+FROM node:20-alpine AS build
 WORKDIR /app
-RUN npm ci --omit=dev
-RUN npm install serve --no-save # Install serve for production
-
-FROM node:20-alpine AS build-env
-COPY . /app/
-COPY --from=development-dependencies-env /app/node_modules /app/node_modules
-WORKDIR /app
+COPY . .
+COPY --from=deps /app/node_modules ./node_modules
 RUN npm run build
 
+# Production image
 FROM node:20-alpine
-COPY ./package.json package-lock.json /app/
-COPY --from=production-dependencies-env /app/node_modules /app/node_modules
-COPY --from=build-env /app/build /app/build
 WORKDIR /app
-CMD ["npx", "serve", "build/client", "-s", "-l", "tcp://0.0.0.0:${PORT:-3000}"]
+ENV PORT=3000
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=build /app/build ./build
+RUN npm install serve --no-save
+CMD ["npx", "serve", "build/client", "-s", "-l", "tcp://0.0.0.0:3000"]
