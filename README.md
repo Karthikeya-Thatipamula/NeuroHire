@@ -30,13 +30,6 @@ NeuroHire is an intelligent, AI-powered resume analysis tool designed to help jo
 - [TypeScript](https://www.typescriptlang.org/)
 - [Puter.js](https://puter.com/)
 - [PDF.js](https://mozilla.github.io/pdf.js/)
-
----
-
-## 📸 Preview
-
-![NeuroHire Hero Section](public/readme/hero.webp)
-
 ---
 
 ## 🌐 Getting Started
