@@ -1,6 +1,7 @@
 # 🧠 NeuroHire - AI-Powered Resume Analyzer
 
 > **Live Demo:** [neurohire-18.vercel.app](https://neurohire-18.vercel.app/)
+> **Video Demo:** [neurohire-18.vercel.app](https://drive.google.com/file/d/1IMeNZriqkeZnEfQtQCY0jGyo3nalix_j/view?usp=drive_link)
 
 ---
 
